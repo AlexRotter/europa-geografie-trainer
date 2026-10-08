@@ -1,8 +1,8 @@
 /* Service Worker – macht den Europa-Trainer offline-fähig.
    Beim ersten Öffnen (mit Internet) werden alle Dateien gespeichert,
    danach läuft die App ohne Netz. */
-const CACHE = 'europa-trainer-v1';
-const ASSETS = ['./', './index.html', './mapdata.js', './manifest.webmanifest', './icon.svg', './apple-touch-icon.png'];
+const CACHE = 'europa-trainer-v2';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
