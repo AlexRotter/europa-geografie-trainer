@@ -1,0 +1,16 @@
+{
+  "name": "Europa-Trainer – Staaten, Hauptstädte, Meere, Teilräume",
+  "short_name": "Europa",
+  "description": "Europa üben: Staaten, Hauptstädte, Meere A–K und Teilräume – offline.",
+  "lang": "de",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef4ff",
+  "theme_color": "#2a6df4",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "apple-touch-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

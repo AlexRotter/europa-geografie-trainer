@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Europa-Trainer</title>
+<meta name="description" content="Europa üben: Staaten, Hauptstädte, Meere und Teilräume – Geografie Klasse 6, offline nutzbar.">
+<meta name="theme-color" content="#2a6df4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Europa">
+<style>
+:root{
+  --bg:#eef4ff; --card:#fff; --ink:#1b2540; --muted:#5b6785; --line:#d6dff0;
+  --blue:#2a6df4; --blue-d:#1b4fc0; --ok:#1f9d55; --ok-bg:#e3f6ea; --bad:#d63b3b; --bad-bg:#fde8e8;
+  --warn:#b7791f; --warn-bg:#fff5df; --sea:#cfe4f7; --land:#ffffff; --other:#e4e4e4;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:860px;margin:0 auto;padding:12px 16px 40px}
+header{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+header h1{font-size:1.3rem;margin:0;flex:1}
+.btn{appearance:none;border:0;border-radius:12px;background:var(--blue);color:#fff;font:inherit;font-weight:600;padding:12px 16px;cursor:pointer;touch-action:manipulation}
+.btn:active{transform:scale(.98)}
+.btn.sec{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+.btn.small{padding:7px 12px;font-size:.9rem;border-radius:10px}
+.btn.ghost{background:transparent;color:var(--blue);padding:8px 10px}
+.card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(20,40,90,.08);margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.tile{background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px;text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:88px}
+.tile:hover{border-color:var(--blue)}
+.tile b{font-size:1rem}
+.tile span{color:var(--muted);font-size:.85rem}
+.tile .ic{font-size:1.5rem;line-height:1}
+.tile.hi{border-color:var(--blue);background:#f2f7ff}
+h2{font-size:1.1rem;margin:18px 0 8px}
+.muted{color:var(--muted)}
+.seg{display:flex;background:#fff;border:2px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;font:inherit;padding:9px 6px;cursor:pointer;color:var(--muted);font-weight:600}
+.seg button.on{background:var(--blue);color:#fff}
+.settings{display:flex;flex-direction:column;gap:8px}
+.settings label{font-size:.85rem;color:var(--muted);font-weight:600}
+.progress{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px 0 12px}
+.progress i{display:block;height:100%;background:var(--blue);width:0;transition:width .25s}
+.qhead{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem}
+.prompt{font-size:1.25rem;font-weight:700;margin:6px 0 12px}
+.prompt small{display:block;font-size:.9rem;font-weight:500;color:var(--muted);margin-top:2px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opts.one{grid-template-columns:1fr}
+.opt{border:2px solid var(--line);background:#fff;border-radius:12px;padding:13px 10px;font:inherit;font-weight:600;cursor:pointer;color:var(--ink);touch-action:manipulation}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg)}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.opt[disabled]{cursor:default}
+.txt{display:flex;gap:8px}
+.txt input{flex:1;min-width:0;font:inherit;font-size:1.1rem;padding:12px;border:2px solid var(--line);border-radius:12px}
+.txt input:focus{outline:none;border-color:var(--blue)}
+.fb{margin-top:12px;padding:12px;border-radius:12px;font-weight:600;display:none}
+.fb.ok{display:block;background:var(--ok-bg);color:#166b3b}
+.fb.bad{display:block;background:var(--bad-bg);color:#9b2020}
+.fb.warn{display:block;background:var(--warn-bg);color:#7a4e0e}
+.fb .ex{font-weight:400;margin-top:4px;color:var(--ink)}
+.next{margin-top:12px;width:100%}
+.mapbox{position:relative;background:var(--sea);border-radius:14px;overflow:hidden;border:2px solid var(--line);margin-bottom:12px;touch-action:pan-y}
+.mapbox.zoomed{touch-action:none}
+.mapbox svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+.mapbox .zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.mapbox .zoom button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:1.3rem;font-weight:700;color:var(--ink);cursor:pointer}
+.mapbox .hint{position:absolute;left:8px;bottom:6px;font-size:.75rem;color:var(--muted);background:rgba(255,255,255,.8);padding:2px 6px;border-radius:6px}
+path.c{fill:var(--land);stroke:#4a5568;stroke-width:.7;vector-effect:non-scaling-stroke;cursor:pointer}
+path.c.tap:hover{fill:#eaf1ff}
+path.o{fill:var(--other);stroke:#b5b5b5;stroke-width:.5;vector-effect:non-scaling-stroke}
+path.c.dim{fill:#f4f6fa}
+path.c.hl{fill:#ffcf3f}
+path.c.ok{fill:#5cc98a}
+path.c.bad{fill:#f08080}
+.sea circle{fill:#fff;stroke:var(--blue);stroke-width:2;vector-effect:non-scaling-stroke}
+.sea text{font-weight:800;fill:var(--blue-d);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.sea.tap{cursor:pointer}
+.sea.hl circle{fill:#ffcf3f;stroke:#b7791f}
+.sea.ok circle{fill:#5cc98a;stroke:var(--ok)}
+.sea.bad circle{fill:#f08080;stroke:var(--bad)}
+.sea.dim{opacity:.35}
+.lbl{font-weight:700;fill:#1b2540;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:3px;pointer-events:none}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.85rem}
+.chip{display:inline-block;border-radius:999px;padding:2px 9px;font-size:.8rem;font-weight:700;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.tip{border-left:4px solid var(--blue);background:#f2f7ff;padding:10px 12px;border-radius:8px;margin:8px 0}
+.tip.warn{border-color:var(--warn);background:var(--warn-bg)}
+.flip{perspective:900px;cursor:pointer;margin:6px 0 12px}
+.flip .in{position:relative;min-height:170px;transition:transform .45s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .f,.flip .b{position:absolute;inset:0;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;padding:16px;text-align:center}
+.flip .f{background:#fff;border:2px solid var(--line)}
+.flip .b{background:#f2f7ff;border:2px solid var(--blue);transform:rotateY(180deg)}
+.flip .big{font-size:1.6rem;font-weight:800}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1}
+.stat{display:flex;align-items:center;gap:10px;margin:8px 0}
+.stat .bar{flex:1;height:12px;background:var(--line);border-radius:7px;overflow:hidden}
+.stat .bar i{display:block;height:100%;background:var(--ok)}
+.stat b{min-width:44px;text-align:right}
+.stat span{min-width:150px}
+.big-res{font-size:2.4rem;font-weight:800;text-align:center;margin:6px 0}
+.rev{font-size:.92rem}
+.rev .r{padding:8px 0;border-bottom:1px solid var(--line)}
+.rev .r.bad b{color:var(--bad)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1b2540;color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.on{opacity:.95}
+@media (max-width:420px){.opts{grid-template-columns:1fr}.prompt{font-size:1.12rem}.stat span{min-width:110px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+<script src="mapdata.js"></script>
+<script>
+/* =========================================================
+   DATEN – aus den Heftseiten „Europa – Topographie" (Länder +
+   Hauptstädte) und Westermann „Europa – Staaten und Teilräume"
+   (Meere A–K, Teilräume). core = steht im Heft.
+   ========================================================= */
+const REG = {
+  N:{n:'Nordeuropa',  col:'#8fc3ef'},
+  M:{n:'Mitteleuropa',col:'#4cc25a'},
+  W:{n:'Westeuropa',  col:'#a9dcc0'},
+  S:{n:'Südeuropa',   col:'#d9a066'},
+  SO:{n:'Südosteuropa',col:'#b8865a'},
+  O:{n:'Osteuropa',   col:'#ffd84a'}
+};
+const C = [
+ // k, Name, [weitere erlaubte Namen], Hauptstadt, [erlaubte Schreibweisen], Teilraum, core(Heft-Länder), teil(Heft-Aufgabe Teilräume)
+ ['ISL','Island',[],'Reykjavík',['Reykjavik'],'N',1],
+ ['NOR','Norwegen',[],'Oslo',[],'N',1],
+ ['SWE','Schweden',[],'Stockholm',[],'N',1,1],
+ ['FIN','Finnland',[],'Helsinki',[],'N',1],
+ ['DNK','Dänemark',[],'Kopenhagen',[],'N',1],
+ ['EST','Estland',[],'Tallinn',['Tallin'],'N',0],
+ ['LVA','Lettland',[],'Riga',[],'N',0,1],
+ ['LTU','Litauen',[],'Vilnius',['Wilna'],'N',0],
+ ['GBR','Großbritannien',['Vereinigtes Königreich'],'London',[],'W',1],
+ ['IRL','Irland',[],'Dublin',[],'W',1],
+ ['FRA','Frankreich',[],'Paris',[],'W',1,1],
+ ['BEL','Belgien',[],'Brüssel',[],'W',0],
+ ['NLD','Niederlande',['Holland'],'Amsterdam',[],'W',0],
+ ['LUX','Luxemburg',[],'Luxemburg',[],'W',0],
+ ['DEU','Deutschland',[],'Berlin',[],'M',1,1],
+ ['POL','Polen',[],'Warschau',[],'M',1,1],
+ ['CZE','Tschechien',[],'Prag',[],'M',1],
+ ['SVK','Slowakei',[],'Bratislava',['Pressburg'],'M',0],
+ ['AUT','Österreich',[],'Wien',[],'M',1],
+ ['CHE','Schweiz',[],'Bern',[],'M',1],
+ ['HUN','Ungarn',[],'Budapest',[],'M',0,1],
+ ['PRT','Portugal',[],'Lissabon',[],'S',1],
+ ['ESP','Spanien',[],'Madrid',[],'S',1,1],
+ ['ITA','Italien',[],'Rom',[],'S',1],
+ ['GRC','Griechenland',[],'Athen',[],'S',1],
+ ['MLT','Malta',[],'Valletta',[],'S',0],
+ ['SVN','Slowenien',[],'Ljubljana',['Laibach'],'SO',0],
+ ['HRV','Kroatien',[],'Zagreb',[],'SO',0],
+ ['BIH','Bosnien und Herzegowina',['Bosnien-Herzegowina','Bosnien'],'Sarajevo',[],'SO',0],
+ ['SRB','Serbien',[],'Belgrad',[],'SO',0],
+ ['MNE','Montenegro',[],'Podgorica',[],'SO',0],
+ ['XKX','Kosovo',[],'Pristina',['Priština','Prishtina'],'SO',0],
+ ['MKD','Nordmazedonien',['Mazedonien'],'Skopje',[],'SO',0],
+ ['ALB','Albanien',[],'Tirana',[],'SO',0],
+ ['ROU','Rumänien',[],'Bukarest',[],'SO',1],
+ ['BGR','Bulgarien',[],'Sofia',[],'SO',1,1],
+ ['RUS','Russland',[],'Moskau',[],'O',1],
+ ['BLR','Belarus',['Weißrussland'],'Minsk',[],'O',0],
+ ['UKR','Ukraine',[],'Kiew',['Kyjiw','Kiev'],'O',0,1],
+ ['MDA','Moldau',['Moldawien','Republik Moldau'],'Chișinău',['Chisinau','Kischinau'],'O',0],
+ ['TUR','Türkei',['die Türkei'],'Ankara',[],null,1]
+].map(a=>({k:a[0],n:a[1],alt:a[2],cap:a[3],capAlt:a[4],r:a[5],core:!!a[6],teil:!!a[7]}));
+const CK = Object.fromEntries(C.map(c=>[c.k,c]));
+// Baltische Staaten: Westermann-Karte = Nordeuropa; manche Bücher sagen Osteuropa → beides gilt, Hinweis zeigen
+const BALT = ['EST','LVA','LTU'];
+
+const SEAS = [
+ ['A','Ostsee',[],'liegt zwischen Deutschland, Polen, Skandinavien und dem Baltikum.'],
+ ['B','Nordsee',[],'liegt zwischen Großbritannien, Norwegen, Dänemark und Deutschland.'],
+ ['C','Europäisches Nordmeer',[],'liegt nördlich, zwischen Norwegen und Island.'],
+ ['D','Atlantischer Ozean',['Atlantik'],'ist der große Ozean im Westen Europas.'],
+ ['E','Mittelmeer',[],'liegt zwischen Europa und Afrika (steht zweimal auf der Karte).'],
+ ['F','Tyrrhenisches Meer',[],'liegt westlich von Italien („links vom Stiefel").'],
+ ['G','Adriatisches Meer',['Adria'],'liegt östlich von Italien („rechts vom Stiefel").'],
+ ['H','Ionisches Meer',[],'liegt südlich, zwischen Italien und Griechenland („unter dem Stiefel").'],
+ ['I','Ägäisches Meer',['Ägäis'],'liegt zwischen Griechenland und der Türkei.'],
+ ['J','Schwarzes Meer',[],'liegt nördlich der Türkei, westlich vom Kaspischen Meer.'],
+ ['K','Kaspisches Meer',[],'liegt ganz im Osten am Kartenrand – eigentlich der größte See der Erde.']
+].map(a=>({l:a[0],n:a[1],alt:a[2],ex:a[3]}));
+const SK = Object.fromEntries(SEAS.map(s=>[s.l,s]));
+
+/* Zusatzwissen Europa (Bonus, nicht direkt aus dem Heft) */
+const KNOW = [
+ ['Welches Gebirge bildet im Osten die Grenze zwischen Europa und Asien?','Ural',['Alpen','Pyrenäen','Karpaten'],'Das Uralgebirge in Russland trennt Europa und Asien.'],
+ ['Welche Meerenge in Istanbul trennt Europa und Asien?','Bosporus',['Ärmelkanal','Straße von Gibraltar','Öresund'],'Istanbul liegt auf zwei Kontinenten – der Bosporus liegt dazwischen.'],
+ ['Was ist das flächenmäßig größte Land Europas?','Russland',['Frankreich','Ukraine','Deutschland'],'Russland ist das größte Land der Erde und reicht bis nach Asien.'],
+ ['Was ist der kleinste Staat Europas (und der Welt)?','Vatikanstadt',['Malta','Luxemburg','Liechtenstein'],'Die Vatikanstadt liegt mitten in Rom.'],
+ ['Was ist der längste Fluss Europas?','Wolga',['Donau','Rhein','Elbe'],'Die Wolga fließt durch Russland ins Kaspische Meer.'],
+ ['In welches Meer mündet die Donau?','Schwarzes Meer',['Nordsee','Ostsee','Mittelmeer'],'Die Donau fließt durch viele Länder bis ins Schwarze Meer.'],
+ ['In welches Meer mündet der Rhein?','Nordsee',['Ostsee','Schwarzes Meer','Mittelmeer'],'Der Rhein mündet in den Niederlanden in die Nordsee.'],
+ ['Welche Hauptstadt liegt NICHT an der Donau?','Prag',['Wien','Budapest','Belgrad'],'Prag liegt an der Moldau.'],
+ ['Welches Gebirge liegt zwischen Spanien und Frankreich?','Pyrenäen',['Alpen','Apenninen','Karpaten'],'Die Pyrenäen trennen die Iberische Halbinsel vom Rest Europas.'],
+ ['Welches Gebirge zieht sich vor allem durch Rumänien und die Slowakei?','Karpaten',['Ural','Pyrenäen','Skanden'],'Die Karpaten bilden einen großen Bogen in Südosteuropa.'],
+ ['Wie heißt der höchste Berg der Alpen?','Mont Blanc',['Zugspitze','Matterhorn','Großglockner'],'Der Mont Blanc (ca. 4.800 m) liegt an der Grenze Frankreich/Italien.'],
+ ['Auf welcher Halbinsel liegen Spanien und Portugal?','Iberische Halbinsel',['Balkanhalbinsel','Skandinavische Halbinsel','Apenninenhalbinsel'],'Spanien + Portugal = Iberische Halbinsel.'],
+ ['Auf welcher Halbinsel liegen Norwegen und Schweden?','Skandinavische Halbinsel',['Iberische Halbinsel','Jütland','Balkanhalbinsel'],'Norwegen + Schweden = Skandinavische Halbinsel.'],
+ ['Wie heißt die Halbinsel, auf der Italien liegt („Stiefel")?','Apenninenhalbinsel',['Iberische Halbinsel','Balkanhalbinsel','Krim'],'Italien = Apenninenhalbinsel.'],
+ ['Auf welcher Halbinsel liegen Griechenland, Albanien und Bulgarien?','Balkanhalbinsel',['Iberische Halbinsel','Apenninenhalbinsel','Skandinavische Halbinsel'],'Der Südosten Europas = Balkanhalbinsel.'],
+ ['Wie heißt die Halbinsel, auf der das Festland von Dänemark liegt?','Jütland',['Krim','Bretagne','Peloponnes'],'Dänemarks Festland ist die Halbinsel Jütland.'],
+ ['Welche Meerenge verbindet das Mittelmeer mit dem Atlantischen Ozean?','Straße von Gibraltar',['Bosporus','Ärmelkanal','Öresund'],'Zwischen Spanien und Afrika (Marokko) liegt die Straße von Gibraltar.'],
+ ['Welcher Meeresarm liegt zwischen Großbritannien und Frankreich?','Ärmelkanal',['Bosporus','Straße von Gibraltar','Öresund'],'Unter dem Ärmelkanal fährt ein Zug durch einen Tunnel.'],
+ ['Was ist die größte Insel Europas?','Großbritannien',['Island','Irland','Sizilien'],'Großbritannien ist die größte Insel Europas.'],
+ ['Was ist das Kaspische Meer eigentlich?','Der größte See der Erde',['Ein Teil des Atlantiks','Ein Fluss','Ein Teil des Mittelmeers'],'Es hat keine Verbindung zum Ozean – deshalb ist es ein See.'],
+ ['Die Türkei liegt zum größten Teil in …','Asien',['Europa','Afrika','Amerika'],'Nur ein kleiner Teil um Istanbul liegt in Europa. Die Hauptstadt Ankara liegt in Asien.'],
+ ['Welche Insel ist bekannt für Vulkane und Geysire?','Island',['Irland','Malta','Sizilien'],'Island liegt auf einer Spalte zwischen zwei Erdplatten.'],
+ ['Welches Land gehört zu „Westeuropa"?','Frankreich',['Polen','Ungarn','Schweden'],'Westeuropa: Großbritannien, Irland, Frankreich, Belgien, Niederlande, Luxemburg.'],
+ ['Welches Land gehört zu „Osteuropa"?','Ukraine',['Ungarn','Tschechien','Österreich'],'Osteuropa: Russland, Belarus, Ukraine, Moldau.'],
+ ['Welches Land gehört zu „Mitteleuropa"?','Österreich',['Frankreich','Italien','Rumänien'],'Mitteleuropa: Deutschland, Polen, Tschechien, Slowakei, Österreich, Schweiz, Ungarn.'],
+ ['Wie heißt der Kontinent südlich vom Mittelmeer?','Afrika',['Asien','Amerika','Australien'],'Südlich vom Mittelmeer liegt Afrika.']
+].map((a,i)=>({id:'w'+i,q:a[0],a:a[1],wrong:a[2],ex:a[3]}));
+
+/* =========================================================
+   SPEICHER (Lernstand) – nur in diesem Browser
+   ========================================================= */
+const LS_KEY='europa-trainer-v1';
+let DB={items:{},sessions:[],set:{scope:'core',answer:'mc'}};
+try{const s=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(s&&s.items)DB=Object.assign(DB,s);}catch(e){}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(DB));}catch(e){}}
+function record(key,ok){
+  const it=DB.items[key]||(DB.items[key]={r:0,w:0,h:[]});
+  ok?it.r++:it.w++; it.h.push(ok?1:0); if(it.h.length>4)it.h.shift(); save();
+}
+// „sitzt" = die letzten zwei Versuche richtig
+function mastered(key){const it=DB.items[key];return !!(it&&it.h.length>=2&&it.h.slice(-2).every(x=>x));}
+function weak(key){const it=DB.items[key];return !!(it&&it.h.length&&!mastered(key)&&it.h.includes(0));}
+
+/* =========================================================
+   HILFSFUNKTIONEN
+   ========================================================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+const pick=(a,n)=>shuffle(a).slice(0,n);
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1600);}
+const n1=s=>s.toLowerCase().trim().replace(/\s+/g,' ').replace(/^(die|der|das)\s+/,'');
+const n2=s=>n1(s).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[\s\-.]/g,'');
+function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
+/* Freitext prüfen: 'ok' | 'umlaut' (richtig, aber Umlaute/ß anders) | 'near' (fast – Rechtschreibung) | 'bad' */
+function checkText(input,answers){
+  if(!input.trim())return 'bad';
+  if(answers.some(a=>n1(a)===n1(input)))return 'ok';
+  if(answers.some(a=>n2(a)===n2(input)))return 'umlaut';
+  const x=n2(input);
+  if(KNOWN.has(x))return 'bad'; // anderer echter Name (z. B. Budapest statt Bukarest) ist kein Tippfehler
+  if(answers.some(a=>{const y=n2(a);return y.length>3&&lev(x,y)<=Math.max(1,Math.min(3,Math.floor(y.length/4)));}))return 'near';
+  return 'bad';
+}
+const KNOWN=new Set([...C.flatMap(c=>[c.n,...c.alt,c.cap,...c.capAlt]),...SEAS.flatMap(x=>[x.n,...x.alt])].map(n2));
+const scopeList=()=>DB.set.scope==='all'?C:C.filter(c=>c.core);
+const teilList=()=>DB.set.scope==='all'?C.filter(c=>c.r):C.filter(c=>c.r&&(c.core||c.teil));
+const useText=()=>DB.set.answer==='text';
+
+/* =========================================================
+   KARTE
+   ========================================================= */
+function makeMap(box,o={}){
+  const NS='http://www.w3.org/2000/svg';
+  box.innerHTML='';box.classList.add('mapbox');
+  const svg=document.createElementNS(NS,'svg');
+  const full=[0,0,MAP_W,MAP_H];let vb=full.slice();
+  const setVB=v=>{vb=v;svg.setAttribute('viewBox',v.map(x=>x.toFixed(1)).join(' '));upd();};
+  svg.setAttribute('viewBox',full.join(' '));svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  const gO=document.createElementNS(NS,'g'),gC=document.createElementNS(NS,'g'),gL=document.createElementNS(NS,'g'),gS=document.createElementNS(NS,'g');
+  MAP_OTHER.forEach(d=>{const p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('class','o');gO.appendChild(p);});
+  const P={};
+  for(const k in MAP_COUNTRIES){const p=document.createElementNS(NS,'path');p.setAttribute('d',MAP_COUNTRIES[k]);p.setAttribute('class','c'+(o.onTap?' tap':''));p.dataset.k=k;P[k]=p;gC.appendChild(p);}
+  // kleine Länder zuletzt, damit sie oben liegen und antippbar sind
+  ['LUX','MLT','SVN','MNE','XKX','MKD','ALB','BEL','CHE','MDA'].forEach(k=>P[k]&&gC.appendChild(P[k]));
+  const S={};
+  if(o.seas){for(const l in MAP_SEAS){S[l]=[];MAP_SEAS[l].forEach(([x,y])=>{const g=document.createElementNS(NS,'g');g.setAttribute('class','sea'+(o.onSea?' tap':''));g.dataset.l=l;
+    const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',17);
+    const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',y+1);t.setAttribute('font-size',20);t.textContent=o.seaNames?'':l;
+    g.append(c,t);gS.appendChild(g);S[l].push(g);});}}
+  svg.append(gO,gC,gL,gS);box.appendChild(svg);
+  if(o.fill)for(const k in o.fill)P[k]&&(P[k].style.fill=o.fill[k]);
+  // Zoom-Knöpfe + Verschieben
+  const z=document.createElement('div');z.className='zoom';
+  z.innerHTML='<button aria-label="Vergrößern">+</button><button aria-label="Verkleinern">−</button><button aria-label="Ganze Karte">⤢</button>';
+  box.appendChild(z);
+  const hint=document.createElement('div');hint.className='hint';hint.textContent='Mit + vergrößern, mit dem Finger verschieben';box.appendChild(hint);
+  function zoomBy(f,cx,cy){const w=Math.min(full[2],Math.max(120,vb[2]*f)),h=w*MAP_H/MAP_W;cx=cx??vb[0]+vb[2]/2;cy=cy??vb[1]+vb[3]/2;setVB(clamp([cx-w/2,cy-h/2,w,h]));}
+  function clamp(v){v[0]=Math.min(Math.max(v[0],0),MAP_W-v[2]);v[1]=Math.min(Math.max(v[1],0),MAP_H-v[3]);return v;}
+  z.children[0].onclick=()=>zoomBy(.6);z.children[1].onclick=()=>zoomBy(1/.6);z.children[2].onclick=()=>setVB(full.slice());
+  function upd(){const s=vb[2]/MAP_W;box.classList.toggle('zoomed',s<0.999);svg.querySelectorAll('.sea circle').forEach(c=>c.setAttribute('r',Math.max(9,17*Math.sqrt(s))));svg.querySelectorAll('.sea text').forEach(t=>t.setAttribute('font-size',Math.max(11,20*Math.sqrt(s))));const k=vb[2]/(svg.clientWidth||MAP_W);gL.querySelectorAll('text').forEach(t=>{t.setAttribute('font-size',15*k+'');t.style.strokeWidth=3.5*k+'px';});}
+  // Ziehen (Pan) und Tippen unterscheiden
+  let drag=null,moved=false;
+  const toSvg=(cx,cy)=>{const r=svg.getBoundingClientRect();return[vb[0]+(cx-r.left)/r.width*vb[2],vb[1]+(cy-r.top)/r.height*vb[3]];};
+  svg.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,vb:vb.slice()};moved=false;});
+  svg.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>8)moved=true;if(!moved||vb[2]>=MAP_W)return;const r=svg.getBoundingClientRect();setVB(clamp([drag.vb[0]-dx/r.width*vb[2],drag.vb[1]-dy/r.height*vb[3],vb[2],vb[3]]));});
+  window.addEventListener('pointerup',()=>{setTimeout(()=>drag=null,0);});
+  svg.addEventListener('wheel',e=>{e.preventDefault();const[x,y]=toSvg(e.clientX,e.clientY);zoomBy(e.deltaY>0?1.2:1/1.2,x,y);},{passive:false});
+  svg.addEventListener('click',e=>{if(moved)return;const sea=e.target.closest('.sea');if(sea&&o.onSea){o.onSea(sea.dataset.l);return;}const p=e.target.closest('path.c');if(p&&o.onTap)o.onTap(p.dataset.k);});
+  const api={P,S,
+    cls(k,c){P[k]&&P[k].classList.add(c);},
+    seaCls(l,c){(S[l]||[]).forEach(g=>g.classList.add(c));},
+    dimSeas(except){for(const l in S)if(l!==except)S[l].forEach(g=>g.classList.add('dim'));},
+    label(k,txt){const p=P[k];if(!p)return;const b=p.getBBox();let[x,y]=MAP_CITIES[k]||[b.x+b.width/2,b.y+b.height/2];const t=document.createElementNS(NS,'text');t.setAttribute('class','lbl');t.setAttribute('x',x);t.setAttribute('y',y-8*vb[2]/(svg.clientWidth||MAP_W));t.textContent=txt;gL.appendChild(t);upd();},
+    focus(k,minW=380){const p=P[k];if(!p)return;let b=p.getBBox();
+      if(k==='RUS')b={x:520,y:120,width:480,height:450};if(k==='NOR')b={x:300,y:20,width:250,height:330};if(k==='FRA'&&b.width>300)b={x:140,y:400,width:200,height:200};
+      const w=Math.min(MAP_W,Math.max(minW,b.width*2.2,b.height*2.2*MAP_W/MAP_H)),h=w*MAP_H/MAP_W;setVB(clamp([b.x+b.width/2-w/2,b.y+b.height/2-h/2,w,h]));},
+    reset(){setVB(full.slice());}
+  };
+  upd();return api;
+}
+
+/* =========================================================
+   FRAGEN ERZEUGEN
+   ========================================================= */
+function distract(correct,pool,n=3){return pick(pool.filter(x=>x!==correct),n);}
+const qCapMC=c=>({key:'cap:'+c.k,cat:'Hauptstädte',type:'mc',prompt:`Was ist die Hauptstadt von <u>${esc(c.n)}</u>?`,answer:c.cap,
+  options:shuffle([c.cap,...distract(c.cap,scopeList().map(x=>x.cap))]),ex:`${c.n}: ${c.cap}`});
+const qCapText=c=>({key:'cap:'+c.k,cat:'Hauptstädte',type:'text',prompt:`Schreibe die Hauptstadt von <u>${esc(c.n)}</u>:`,answer:c.cap,accept:[c.cap,...c.capAlt],ex:`${c.n}: ${c.cap}`});
+const qLandMC=c=>({key:'land:'+c.k,cat:'Hauptstädte',type:'mc',prompt:`<u>${esc(c.cap)}</u> ist die Hauptstadt von …`,answer:c.n,
+  options:shuffle([c.n,...distract(c.n,scopeList().map(x=>x.n))]),ex:`${c.cap} → ${c.n}`});
+const qLandText=c=>({key:'land:'+c.k,cat:'Hauptstädte',type:'text',prompt:`<u>${esc(c.cap)}</u> ist die Hauptstadt von welchem Land?`,answer:c.n,accept:[c.n,...c.alt],ex:`${c.cap} → ${c.n}`});
+const qTap=c=>({key:'map:'+c.k,cat:'Karte',type:'tap',prompt:`Tippe auf <u>${esc(c.n)}</u>`,answer:c.k,ex:`So liegt ${c.n} auf der Karte.`});
+const qName=c=>useText()
+  ?{key:'map:'+c.k,cat:'Karte',type:'text',map:{hl:c.k},prompt:'Wie heißt das gelb markierte Land?',answer:c.n,accept:[c.n,...c.alt],ex:`Das ist ${c.n} (Hauptstadt ${c.cap}).`}
+  :{key:'map:'+c.k,cat:'Karte',type:'mc',map:{hl:c.k},prompt:'Wie heißt das gelb markierte Land?',answer:c.n,options:shuffle([c.n,...distract(c.n,scopeList().map(x=>x.n))]),ex:`Das ist ${c.n} (Hauptstadt ${c.cap}).`};
+const qSeaName=s=>useText()
+  ?{key:'sea:'+s.l,cat:'Meere',type:'text',map:{sea:s.l},prompt:`Wie heißt das Meer bei <u>${s.l}</u>?`,answer:s.n,accept:[s.n,...s.alt],ex:`${s.l} = ${s.n}: ${s.ex}`}
+  :{key:'sea:'+s.l,cat:'Meere',type:'mc',map:{sea:s.l},prompt:`Wie heißt das Meer bei <u>${s.l}</u>?`,answer:s.n,options:shuffle([s.n,...distract(s.n,SEAS.map(x=>x.n))]),ex:`${s.l} = ${s.n}: ${s.ex}`};
+const qSeaTap=s=>({key:'seatap:'+s.l,cat:'Meere',type:'seatap',prompt:`Tippe auf den Buchstaben für das <u>${esc(s.n)}</u>`,answer:s.l,ex:`${s.n} = ${s.l}: ${s.ex}`});
+const qReg=c=>({key:'reg:'+c.k,cat:'Teilräume',type:'mc',map:{hl:c.k,wide:true},prompt:`Zu welchem Teilraum Europas gehört <u>${esc(c.n)}</u>?`,answer:REG[c.r].n,
+  alsoOk:BALT.includes(c.k)?[REG.O.n]:[],options:Object.values(REG).map(r=>r.n),
+  ex:BALT.includes(c.k)?`Auf deiner Westermann-Karte gehört ${c.n} zu Nordeuropa. Manche Bücher zählen das Baltikum zu Osteuropa – frag deine Lehrkraft, was in der Arbeit gilt.`:`${c.n} gehört zu ${REG[c.r].n}.`});
+const qKnow=w=>({key:'know:'+w.id,cat:'Europa-Wissen',type:'mc',prompt:esc(w.q),answer:w.a,options:shuffle([w.a,...w.wrong]),ex:w.ex});
+
+/* =========================================================
+   MODI
+   ========================================================= */
+const MODES=[
+ {id:'learn',ic:'📖',t:'Lernen',d:'Alles auf einen Blick + Merktipps',run:()=>showLearn()},
+ {id:'cards',ic:'🃏',t:'Karteikarten',d:'Land ↔ Hauptstadt umdrehen',run:()=>showCards()},
+ {id:'cap',ic:'🏙️',t:'Hauptstädte',d:'Land → Hauptstadt',q:()=>scopeList().map(c=>useText()?qCapText(c):qCapMC(c))},
+ {id:'land',ic:'🔁',t:'Hauptstadt → Land',d:'Zu welchem Land gehört die Stadt?',q:()=>scopeList().map(c=>useText()?qLandText(c):qLandMC(c))},
+ {id:'tap',ic:'👆',t:'Land antippen',d:'Finde das Land auf der Karte',q:()=>scopeList().map(qTap)},
+ {id:'name',ic:'🗺️',t:'Land erkennen',d:'Wie heißt das markierte Land?',q:()=>scopeList().map(qName)},
+ {id:'sea',ic:'🌊',t:'Meere A–K',d:'Welches Meer ist bei dem Buchstaben?',q:()=>SEAS.map(qSeaName)},
+ {id:'seatap',ic:'📍',t:'Meere finden',d:'Tippe den richtigen Buchstaben',q:()=>SEAS.map(qSeaTap)},
+ {id:'reg',ic:'🧭',t:'Teilräume',d:'Nord-, Mittel-, West-, Süd-, Südost-, Osteuropa',q:()=>teilList().map(qReg)},
+ {id:'know',ic:'🧠',t:'Europa-Wissen',d:'Bonus: Gebirge, Flüsse, Halbinseln',q:()=>KNOW.map(qKnow)},
+ {id:'exam',ic:'📝',t:'Probearbeit',d:'Gemischt wie in der Arbeit – mit Note',run:()=>startExam()},
+ {id:'weak',ic:'🔥',t:'Fehler üben',d:'Nur was noch nicht sitzt',run:()=>startWeak()},
+ {id:'stats',ic:'📊',t:'Mein Lernstand',d:'Was sitzt schon, was nicht?',run:()=>showStats()}
+];
+
+function home(){
+  const app=$('#app');
+  const w=allKeys().filter(weak).length;
+  app.innerHTML=`<header><h1>🌍 Europa-Trainer</h1></header>
+  <div class="card settings">
+    <label>Welche Länder?</label>
+    <div class="seg" id="sScope"><button data-v="core">Aus dem Heft (21)</button><button data-v="all">Alle Länder Europas</button></div>
+    <label>Antworten</label>
+    <div class="seg" id="sAns"><button data-v="mc">Auswählen (leichter)</button><button data-v="text">Selbst schreiben (wie in der Arbeit)</button></div>
+  </div>
+  <div class="grid">${MODES.map(m=>`<button class="tile${m.id==='exam'?' hi':''}" data-m="${m.id}"><span class="ic">${m.ic}</span><b>${m.t}${m.id==='weak'&&w?` (${w})`:''}</b><span>${m.d}</span></button>`).join('')}</div>
+  <p class="muted" style="font-size:.8rem;margin-top:18px">Tipp: Im Browser-Menü „Zum Home-Bildschirm" wählen – dann funktioniert die App auch ohne Internet. Dein Lernstand bleibt nur auf diesem Gerät gespeichert.</p>`;
+  const seg=(id,key)=>{const el=$(id);el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',DB.set[key]===b.dataset.v);b.onclick=()=>{DB.set[key]=b.dataset.v;save();home();};});};
+  seg('#sScope','scope');seg('#sAns','answer');
+  app.querySelectorAll('.tile').forEach(t=>t.onclick=()=>{const m=MODES.find(x=>x.id===t.dataset.m);m.run?m.run():runQuiz(m.t,shuffle(m.q()),{});});
+  window.scrollTo(0,0);
+}
+
+/* =========================================================
+   QUIZ-ENGINE
+   ========================================================= */
+function runQuiz(title,qs,opt){
+  const app=$('#app');let i=0,right=0;const log=[];const t0=Date.now();
+  if(!qs.length){app.innerHTML=`<header><button class="btn ghost" id="back">‹ Zurück</button><h1>${esc(title)}</h1></header><div class="card">Hier gibt es gerade nichts zu üben. 🎉</div>`;$('#back').onclick=home;return;}
+  function show(){
+    const q=qs[i];
+    app.innerHTML=`<header><button class="btn ghost" id="back">‹ Menü</button><h1>${esc(title)}</h1></header>
+    <div class="card"><div class="qhead"><span>Frage ${i+1} von ${qs.length}</span><span>${opt.exam?'':'✔ '+right}</span></div>
+    <div class="progress"><i style="width:${i/qs.length*100}%"></i></div>
+    <div id="mapc"></div>
+    <div class="prompt">${q.prompt}</div><div id="ans"></div><div class="fb" id="fb"></div><div id="nx"></div></div>`;
+    $('#back').onclick=()=>{if(i===0||confirm('Übung abbrechen?'))home();};
+    let map=null;const needMap=q.type==='tap'||q.type==='seatap'||q.map;
+    if(needMap){
+      const seas=q.type==='seatap'||(q.map&&q.map.sea);
+      map=makeMap($('#mapc'),{seas,onTap:q.type==='tap'?k=>answer(k):null,onSea:q.type==='seatap'?l=>answer(l):null});
+      if(q.map&&q.map.hl){map.cls(q.map.hl,'hl');if(!q.map.wide)map.focus(q.map.hl);else{const b=map.P[q.map.hl].getBBox();if(b.width<60)map.focus(q.map.hl,520);}}
+      if(q.map&&q.map.sea){map.seaCls(q.map.sea,'hl');map.dimSeas(q.map.sea);}
+    }
+    const ans=$('#ans');let done=false;
+    if(q.type==='mc'){
+      ans.innerHTML=`<div class="opts${q.options.length>4?' one':''}">${q.options.map(o=>`<button class="opt">${esc(o)}</button>`).join('')}</div>`;
+      ans.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(b.textContent,b));
+    }else if(q.type==='text'){
+      ans.innerHTML=`<form class="txt" autocomplete="off"><input id="ti" autocapitalize="words" autocorrect="off" spellcheck="false" placeholder="Antwort schreiben …"><button class="btn">OK</button></form>`;
+      const f=ans.querySelector('form');f.onsubmit=e=>{e.preventDefault();const v=$('#ti').value;if(!v.trim()){toast('Schreib erst etwas hinein 🙂');return;}answer(v);};
+      setTimeout(()=>{if(!needMap||window.innerWidth>700)$('#ti').focus();},50);
+    }
+    function answer(v,btn){
+      if(done)return;done=true;
+      let res;
+      if(q.type==='text')res=checkText(v,q.accept);
+      else if(q.type==='mc')res=(v===q.answer||(q.alsoOk||[]).includes(v))?'ok':'bad';
+      else res=v===q.answer?'ok':'bad';
+      const ok=res==='ok'||res==='umlaut';
+      if(ok)right++;record(q.key,ok);
+      let given=v;if(q.type==='tap')given=CK[v]?CK[v].n:v;if(q.type==='seatap')given=v+(SK[v]?' ('+SK[v].n+')':'');
+      log.push({q,ok,given,res});
+      if(opt.exam){next();return;}
+      // Rückmeldung
+      if(q.type==='mc'){ans.querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(b.textContent===q.answer)b.classList.add('ok');});if(!ok&&btn)btn.classList.add('bad');if(ok&&btn&&btn.textContent!==q.answer)btn.classList.add('ok');}
+      if(q.type==='text'){$('#ti').disabled=true;}
+      if(map){
+        if(q.type==='tap'){map.cls(q.answer,'ok');if(!ok){map.cls(v,'bad');map.label(v,CK[v]?CK[v].n:'');}map.label(q.answer,CK[q.answer].n);if(!ok)map.focus(q.answer,520);}
+        if(q.type==='seatap'){map.seaCls(q.answer,'ok');if(!ok)map.seaCls(v,'bad');}
+        if(q.map&&q.map.hl&&q.type!=='tap'){map.label(q.map.hl,CK[q.map.hl].n);}
+      }
+      const fb=$('#fb');
+      let head=ok?pick(['Richtig! 👍','Super! ✅','Genau! 🎉','Stimmt! 💪'],1)[0]:'Leider falsch.';
+      if(res==='umlaut')head='Richtig – aber achte auf die Schreibweise: '+esc(q.answer);
+      if(res==='near'){head='Fast! Achte genau auf die Schreibweise.';}
+      if(ok&&(q.alsoOk||[]).includes(v))head='Gilt als richtig – siehe Hinweis.';
+      fb.className='fb '+(ok?(res==='umlaut'||(q.alsoOk||[]).includes(v)?'warn':'ok'):(res==='near'?'warn':'bad'));
+      const corr=(q.type==='tap'||q.type==='seatap')?'':(ok&&res==='ok'?'':`<div class="ex">Richtig ist: <b>${esc(q.answer)}</b>${q.type==='text'?` – du hast geschrieben: „${esc(v)}"`:''}</div>`);
+      fb.innerHTML=head+corr+(q.ex?`<div class="ex">${esc(q.ex)}</div>`:'');
+      $('#nx').innerHTML=`<button class="btn next">${i+1<qs.length?'Weiter ›':'Auswertung ›'}</button>`;
+      const nb=$('#nx button');nb.onclick=next;
+      if(ok&&res==='ok'&&!(q.alsoOk||[]).includes(v)&&!map)setTimeout(()=>{if(document.body.contains(nb))next();},900);
+      else nb.focus({preventScroll:true});
+    }
+  }
+  function next(){i++;if(i<qs.length)show();else finish();}
+  function finish(){
+    const pct=Math.round(right/qs.length*100),sec=Math.round((Date.now()-t0)/1000);
+    DB.sessions.push({d:new Date().toISOString(),m:title,r:right,n:qs.length});if(DB.sessions.length>200)DB.sessions.shift();save();
+    const note=opt.exam?grade(pct):null;
+    const wrong=log.filter(x=>!x.ok);
+    app.innerHTML=`<header><h1>${esc(title)} – Auswertung</h1></header>
+    <div class="card"><div class="big-res">${right} / ${qs.length}</div>
+    <p style="text-align:center;margin:0">${pct} % richtig · ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')} min</p>
+    ${note?`<p style="text-align:center;font-size:1.3rem;font-weight:800;margin:10px 0 0">Ungefähre Note: ${note}</p><p class="muted" style="text-align:center;font-size:.8rem;margin:2px 0 0">Nur ein Richtwert – jede Lehrkraft rechnet etwas anders.</p>`:''}
+    <p style="text-align:center">${pct>=90?'🏆 Hervorragend!':pct>=70?'👍 Gut – noch ein bisschen üben!':'💪 Weiter üben – das wird!'}</p>
+    <div class="row"><button class="btn" id="again">Nochmal</button>${wrong.length?'<button class="btn sec" id="fix">Fehler üben</button>':''}<button class="btn sec" id="menu">Menü</button></div></div>
+    ${wrong.length?`<div class="card rev"><h2 style="margin-top:0">Das musst du dir noch merken</h2>${wrong.map(x=>`<div class="r bad">${x.q.prompt.replace(/<[^>]+>/g,'')}<br>Deine Antwort: <b>${esc(x.given)}</b> · Richtig: <b style="color:var(--ok)">${esc(x.q.type==='tap'?CK[x.q.answer].n:x.q.type==='seatap'?x.q.answer+' ('+SK[x.q.answer].n+')':x.q.answer)}</b></div>`).join('')}</div>`:''}`;
+    $('#again').onclick=()=>opt.exam?startExam():runQuiz(title,shuffle(qs.map(regen)),opt);
+    $('#menu').onclick=home;
+    if(wrong.length)$('#fix').onclick=()=>runQuiz('Fehler üben',shuffle(wrong.map(x=>regen(x.q))),{});
+  }
+  show();
+}
+// Frage neu erzeugen (neue Antwortreihenfolge), Typ bleibt
+function regen(q){
+  const [kind,id]=q.key.split(':');const c=CK[id];
+  if(kind==='cap')return q.type==='text'?qCapText(c):qCapMC(c);
+  if(kind==='land')return q.type==='text'?qLandText(c):qLandMC(c);
+  if(kind==='map')return q.type==='tap'?qTap(c):q;
+  if(kind==='reg')return qReg(c);
+  if(kind==='know')return qKnow(KNOW.find(w=>w.id===id));
+  if(kind==='sea')return q.type==='mc'?Object.assign({},q,{options:shuffle(q.options)}):q;
+  return q;
+}
+function grade(p){return p>=92?'1':p>=81?'2':p>=67?'3':p>=50?'4':p>=30?'5':'6';}
+
+function startExam(){
+  // Aufbau wie die Heftseiten: Länder auf der Karte, Hauptstädte schreiben, Meere A–K schreiben, Teilräume zuordnen
+  const core=C.filter(c=>c.core);
+  const qs=[
+    ...pick(core,4).map(qTap),
+    ...pick(core,3).map(c=>({...qName(c),type:'text',accept:[c.n,...c.alt],options:null})),
+    ...pick(core,6).map(qCapText),
+    ...pick(SEAS,5).map(s=>({...qSeaName(s),type:'text',accept:[s.n,...s.alt],options:null})),
+    ...pick(C.filter(c=>c.teil),4).map(qReg),
+    ...pick(KNOW,2).map(qKnow)
+  ];
+  runQuiz('Probearbeit',qs,{exam:true});
+}
+function allKeys(){return Object.keys(DB.items);}
+function startWeak(){
+  const ks=allKeys().filter(weak);
+  const qs=ks.map(key=>{const[kind,id]=key.split(':');const c=CK[id];
+    if(kind==='cap')return qCapText(c);if(kind==='land')return qLandMC(c);if(kind==='map')return qTap(c);
+    if(kind==='sea')return qSeaName(SK[id]);if(kind==='seatap')return qSeaTap(SK[id]);if(kind==='reg')return qReg(c);
+    if(kind==='know')return qKnow(KNOW.find(w=>w.id===id));}).filter(Boolean);
+  runQuiz('Fehler üben',shuffle(qs),{});
+}
+
+/* =========================================================
+   LERNEN – Übersicht + Merktipps
+   ========================================================= */
+function showLearn(){
+  const app=$('#app');
+  const list=scopeList();
+  app.innerHTML=`<header><button class="btn ghost" id="back">‹ Menü</button><h1>📖 Lernen</h1></header>
+  <div class="card"><h2 style="margin-top:0">1. Länder und Hauptstädte</h2><p class="muted" style="margin:0 0 8px">Tippe auf ein Land in der Karte – es wird angezeigt.</p><div id="m1"></div><div id="m1i" class="tip">Tippe auf ein Land.</div>
+  <table><tr><th>Land</th><th>Hauptstadt</th><th>Teilraum</th></tr>${list.map(c=>`<tr><td><b>${esc(c.n)}</b></td><td>${esc(c.cap)}</td><td>${c.r?`<span class="chip" style="background:${REG[c.r].col}">${REG[c.r].n}</span>`:'<span class="muted">liegt größtenteils in Asien</span>'}</td></tr>`).join('')}</table></div>
+  <div class="card"><h2 style="margin-top:0">2. Meere, Meeresteile und Seen (A–K)</h2><div id="m2"></div>
+  <table>${SEAS.map(s=>`<tr><td style="width:34px"><b>${s.l}</b></td><td><b>${esc(s.n)}</b><br><span class="muted">${esc(s.ex)}</span></td></tr>`).join('')}</table>
+  <div class="tip"><b>Merktipp Italien-Stiefel:</b> links (Westen) das <b>Tyrrhenische</b> Meer, rechts (Osten) das <b>Adriatische</b> Meer, unten (Süden) das <b>Ionische</b> Meer. Zwischen Griechenland und der Türkei liegt das <b>Ägäische</b> Meer.</div>
+  <div class="tip"><b>J oder K?</b> Das <b>Schwarze</b> Meer (J) liegt direkt über der Türkei. Das <b>Kaspische</b> Meer (K) liegt noch weiter rechts, ganz am Rand – es ist eigentlich ein riesiger See.</div>
+  <div class="tip"><b>Ostsee oder Nordsee?</b> Die <b>Nordsee</b> liegt links (westlich) von Dänemark, die <b>Ostsee</b> rechts (östlich) davon.</div></div>
+  <div class="card"><h2 style="margin-top:0">3. Teilräume Europas</h2><div class="legend">${Object.values(REG).map(r=>`<span class="chip" style="background:${r.col}">${r.n}</span>`).join('')}</div><div id="m3"></div>
+  ${Object.entries(REG).map(([k,r])=>`<p style="margin:6px 0"><span class="chip" style="background:${r.col}">${r.n}</span> ${C.filter(c=>c.r===k).map(c=>esc(c.n)).join(', ')}</p>`).join('')}
+  <div class="tip warn"><b>Achtung Baltikum (Estland, Lettland, Litauen):</b> Auf deiner Westermann-Karte sind sie bei <b>Nordeuropa</b> eingezeichnet. In manchen Büchern stehen sie bei Osteuropa. Frag deine Lehrkraft, was in der Arbeit gilt – in dieser App zählt beides als richtig.</div>
+  <div class="tip"><b>Merktipp:</b> Deutschland liegt in der <b>Mitte</b> → Mitteleuropa, zusammen mit Polen, Tschechien, Slowakei, Österreich, Schweiz und Ungarn.</div></div>
+  <div class="card"><h2 style="margin-top:0">4. Darauf besonders achten</h2>
+  <div class="tip warn"><b>Island – Irland – Finnland</b> nicht verwechseln: Island ist die Insel ganz oben links, Irland die kleine Insel neben Großbritannien, Finnland liegt rechts neben Schweden.</div>
+  <div class="tip warn"><b>Großbritannien</b> schreiben, nicht „England" – England ist nur ein Teil von Großbritannien.</div>
+  <div class="tip warn"><b>Schreibweise:</b> Reykjavík (mit <b>y</b> und <b>j</b>) · Stoc<b>k</b>holm · Helsinki · Kopenhagen · Lissabon · Bukarest · Warschau · <b>I</b>onisches Meer · <b>Ä</b>g<b>ä</b>isches Meer · T<b>y</b>rr<b>h</b>enisches Meer · Adriatisches Meer · Kaspisches Meer</div>
+  <div class="tip warn"><b>Rumänien und Bulgarien</b> liegen nebeneinander: Rumänien oben (nördlich, Hauptstadt Bukarest), Bulgarien darunter (südlich, Hauptstadt Sofia).</div></div>`;
+  $('#back').onclick=home;
+  const m1=makeMap($('#m1'),{onTap:k=>{const c=CK[k];$('#m1i').innerHTML=c?`<b>${esc(c.n)}</b> – Hauptstadt: <b>${esc(c.cap)}</b>${c.r?` – ${REG[c.r].n}`:''}`:'';Object.values(m1.P).forEach(p=>p.classList.remove('hl'));m1.cls(k,'hl');}});
+  if(DB.set.scope!=='all')Object.keys(m1.P).forEach(k=>{if(!CK[k].core)m1.cls(k,'dim');});
+  makeMap($('#m2'),{seas:true});
+  const fill={TUR:'#f4f6fa'};C.forEach(c=>{if(c.r)fill[c.k]=REG[c.r].col;});makeMap($('#m3'),{fill});
+  window.scrollTo(0,0);
+}
+
+/* =========================================================
+   KARTEIKARTEN
+   ========================================================= */
+function showCards(){
+  let deck=shuffle(scopeList()),i=0,dir='cap';
+  const app=$('#app');
+  function draw(){
+    const c=deck[i];const front=dir==='cap'?c.n:c.cap,back=dir==='cap'?c.cap:c.n;
+    app.innerHTML=`<header><button class="btn ghost" id="back">‹ Menü</button><h1>🃏 Karteikarten</h1></header>
+    <div class="card"><div class="seg" id="dir"><button data-v="cap" class="${dir==='cap'?'on':''}">Land → Hauptstadt</button><button data-v="land" class="${dir==='land'?'on':''}">Hauptstadt → Land</button></div>
+    <div class="qhead" style="margin-top:10px"><span>Karte ${i+1} von ${deck.length}</span><span>Antippen zum Umdrehen</span></div>
+    <div class="flip" id="fl"><div class="in"><div class="f"><div class="muted">${dir==='cap'?'Land':'Hauptstadt'}</div><div class="big">${esc(front)}</div></div>
+    <div class="b"><div class="muted">${dir==='cap'?'Hauptstadt':'Land'}</div><div class="big">${esc(back)}</div>${c.r?`<div class="chip" style="background:${REG[c.r].col};margin-top:8px">${REG[c.r].n}</div>`:''}</div></div></div>
+    <div class="row"><button class="btn sec" id="no">🤔 Wusste ich nicht</button><button class="btn" id="yes">✅ Wusste ich</button></div></div>`;
+    $('#back').onclick=home;
+    $('#fl').onclick=()=>$('#fl').classList.toggle('on');
+    app.querySelectorAll('#dir button').forEach(b=>b.onclick=()=>{dir=b.dataset.v;draw();});
+    const go=ok=>{record((dir==='cap'?'cap:':'land:')+c.k,ok);if(!ok)deck.push(c);i++;if(i>=deck.length){toast('Alle Karten geschafft! 🎉');deck=shuffle(scopeList());i=0;}draw();};
+    $('#yes').onclick=()=>go(true);$('#no').onclick=()=>go(false);
+  }
+  draw();
+}
+
+/* =========================================================
+   LERNSTAND
+   ========================================================= */
+function showStats(){
+  const app=$('#app');
+  const groups=[
+    ['Hauptstädte (Heft)',C.filter(c=>c.core).map(c=>'cap:'+c.k)],
+    ['Länder auf der Karte (Heft)',C.filter(c=>c.core).map(c=>'map:'+c.k)],
+    ['Meere A–K',SEAS.map(s=>'sea:'+s.l)],
+    ['Teilräume (Heft-Aufgabe)',C.filter(c=>c.teil).map(c=>'reg:'+c.k)],
+    ['Alle Hauptstädte Europas',C.map(c=>'cap:'+c.k)],
+    ['Europa-Wissen (Bonus)',KNOW.map(w=>'know:'+w.id)]
+  ];
+  const label=key=>{const[kind,id]=key.split(':');const c=CK[id];
+    if(kind==='cap')return `Hauptstadt von ${c.n} (${c.cap})`;if(kind==='land')return `${c.cap} → ${c.n}`;if(kind==='map')return `${c.n} auf der Karte`;
+    if(kind==='sea')return `Meer ${id} = ${SK[id].n}`;if(kind==='seatap')return `${SK[id].n} finden (${id})`;if(kind==='reg')return `${c.n} → ${REG[c.r].n}`;
+    if(kind==='know'){const w=KNOW.find(x=>x.id===id);return w?`${w.q} → ${w.a}`:key;}return key;};
+  const weakKeys=allKeys().filter(weak);
+  const last=DB.sessions.slice(-8).reverse();
+  app.innerHTML=`<header><button class="btn ghost" id="back">‹ Menü</button><h1>📊 Mein Lernstand</h1></header>
+  <div class="card"><p class="muted" style="margin-top:0">Ein Punkt „sitzt", wenn du ihn die letzten zwei Male richtig hattest.</p>
+  ${groups.map(([n,ks])=>{const m=ks.filter(mastered).length;const p=Math.round(m/ks.length*100);return `<div class="stat"><span>${n}</span><div class="bar"><i style="width:${p}%"></i></div><b>${m}/${ks.length}</b></div>`;}).join('')}</div>
+  <div class="card"><h2 style="margin-top:0">🔥 Sitzt noch nicht (${weakKeys.length})</h2>
+  ${weakKeys.length?`<ul style="margin:0;padding-left:20px">${weakKeys.map(k=>`<li>${esc(label(k))}</li>`).join('')}</ul><button class="btn next" id="wk">Diese jetzt üben</button>`:'<p class="muted">Nichts offen – super! Oder du hast noch nicht geübt. 🙂</p>'}</div>
+  <div class="card"><h2 style="margin-top:0">Letzte Übungen</h2>${last.length?`<table><tr><th>Wann</th><th>Übung</th><th>Ergebnis</th></tr>${last.map(s=>`<tr><td>${new Date(s.d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})} ${new Date(s.d).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</td><td>${esc(s.m)}</td><td>${s.r}/${s.n} (${Math.round(s.r/s.n*100)} %)</td></tr>`).join('')}</table>`:'<p class="muted">Noch keine Übung gemacht.</p>'}
+  <button class="btn sec small" id="reset" style="margin-top:12px">Lernstand zurücksetzen</button></div>`;
+  $('#back').onclick=home;
+  if(weakKeys.length)$('#wk').onclick=startWeak;
+  $('#reset').onclick=()=>{if(confirm('Wirklich den ganzen Lernstand löschen?')){DB.items={};DB.sessions=[];save();showStats();}};
+  window.scrollTo(0,0);
+}
+
+home();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
