@@ -63,6 +63,11 @@ h2{font-size:1.1rem;margin:18px 0 8px}
 .fb.warn{display:block;background:var(--warn-bg);color:#7a4e0e}
 .fb .ex{font-weight:400;margin-top:4px;color:var(--ink)}
 .next{margin-top:12px;width:100%}
+.fbbar{position:fixed;left:0;right:0;bottom:0;z-index:8;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(238,244,255,.97);box-shadow:0 -4px 18px rgba(20,40,90,.2);max-height:55vh;overflow:auto;cursor:pointer}
+.fbbar .fb{margin:0 auto;max-width:828px}
+.tapnext{max-width:828px;margin:8px auto 0;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;color:var(--blue-d);font-size:.95rem}
+.tapnext span.go{background:var(--blue);color:#fff;border-radius:999px;padding:8px 16px;white-space:nowrap}
+body.hasbar .wrap{padding-bottom:58vh}
 .mapbox{position:relative;background:var(--sea);border-radius:14px;overflow:hidden;border:2px solid var(--line);margin-bottom:12px;touch-action:pan-y}
 .mapbox.zoomed{touch-action:none}
 .mapbox svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
@@ -370,6 +375,7 @@ const MODES=[
 ];
 
 function home(){
+  disarm();
   const app=$('#app');
   const w=allKeys().filter(weak).length;
   app.innerHTML=`<header><h1>🌍 Europa-Trainer</h1></header>
@@ -390,7 +396,12 @@ function home(){
 /* =========================================================
    QUIZ-ENGINE
    ========================================================= */
+// Rückmeldeleiste unten + „Tippen irgendwo = weiter“ (global, damit beim Verlassen nichts hängen bleibt)
+let armed=null;
+function unlisten(){if(armed){document.removeEventListener('click',armed.c,true);document.removeEventListener('keydown',armed.k,true);clearTimeout(armed.t);armed=null;}}
+function disarm(){unlisten();const b=document.getElementById('fbbar');if(b)b.remove();document.body.classList.remove('hasbar');}
 function runQuiz(title,qs,opt){
+  disarm();
   const app=$('#app');let i=0,right=0;const log=[];const t0=Date.now();
   if(!qs.length){app.innerHTML=`<header><button class="btn ghost" id="back">‹ Zurück</button><h1>${esc(title)}</h1></header><div class="card">Hier gibt es gerade nichts zu üben. 🎉</div>`;$('#back').onclick=home;return;}
   function show(){
@@ -399,8 +410,9 @@ function runQuiz(title,qs,opt){
     <div class="card"><div class="qhead"><span>Frage ${i+1} von ${qs.length}</span><span>${opt.exam?'':'✔ '+right}</span></div>
     <div class="progress"><i style="width:${i/qs.length*100}%"></i></div>
     <div id="mapc"></div>
-    <div class="prompt">${q.prompt}</div><div id="ans"></div><div class="fb" id="fb"></div><div id="nx"></div></div>`;
-    $('#back').onclick=()=>{if(i===0||confirm('Übung abbrechen?'))home();};
+    <div class="prompt">${q.prompt}</div><div id="ans"></div></div>`;
+    window.scrollTo(0,0);
+    $('#back').onclick=()=>{if(i===0||confirm('Übung abbrechen?')){disarm();home();}};
     let map=null;const needMap=q.type==='tap'||q.type==='seatap'||q.map;
     if(needMap){
       const seas=q.type==='seatap'||(q.map&&q.map.sea);
@@ -436,6 +448,8 @@ function runQuiz(title,qs,opt){
         if(q.type==='seatap'){map.seaCls(q.answer,'ok');if(!ok)map.seaCls(v,'bad');}
         if(q.map&&q.map.hl&&q.type!=='tap'){map.label(q.map.hl,CK[q.map.hl].n);}
       }
+      const bar=document.createElement('div');bar.className='fbbar';bar.id='fbbar';bar.innerHTML='<div class="fb" id="fb"></div><div class="tapnext"><span>👆 Tippe irgendwo für weiter</span><span class="go">'+(i+1<qs.length?'Weiter ›':'Auswertung ›')+'</span></div>';
+      document.body.appendChild(bar);document.body.classList.add('hasbar');
       const fb=$('#fb');
       let head=ok?pick(['Richtig! 👍','Super! ✅','Genau! 🎉','Stimmt! 💪'],1)[0]:'Leider falsch.';
       if(res==='umlaut')head='Richtig – aber achte auf die Schreibweise: '+esc(q.answer);
@@ -444,13 +458,15 @@ function runQuiz(title,qs,opt){
       fb.className='fb '+(ok?(res==='umlaut'||(q.alsoOk||[]).includes(v)?'warn':'ok'):(res==='near'?'warn':'bad'));
       const corr=(q.type==='tap'||q.type==='seatap')?'':(ok&&res==='ok'?'':`<div class="ex">Richtig ist: <b>${esc(q.answer)}</b>${q.type==='text'?` – du hast geschrieben: „${esc(v)}"`:''}</div>`);
       fb.innerHTML=head+corr+(q.ex?`<div class="ex">${esc(q.ex)}</div>`:'');
-      $('#nx').innerHTML=`<button class="btn next">${i+1<qs.length?'Weiter ›':'Auswertung ›'}</button>`;
-      const nb=$('#nx button');nb.onclick=next;
-      if(ok&&res==='ok'&&!(q.alsoOk||[]).includes(v)&&!map)setTimeout(()=>{if(document.body.contains(nb))next();},900);
-      else nb.focus({preventScroll:true});
+      armNext();
+      if(ok&&res==='ok'&&!(q.alsoOk||[]).includes(v)&&!map){const me=i;setTimeout(()=>{if(i===me&&document.body.contains(bar))next();},900);}
     }
   }
-  function next(){i++;if(i<qs.length)show();else finish();}
+  // Nach einer Antwort: Tippen irgendwo (außer Zoom-Knöpfe/Menü) oder Enter führt weiter
+  function armNext(){unlisten();const c=e=>{if(e.target.closest('.zoom')||e.target.closest('#back'))return;e.preventDefault();e.stopPropagation();next();};
+    const k=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();next();}};
+    armed={c,k};armed.t=setTimeout(()=>{if(armed&&armed.c===c){document.addEventListener('click',c,true);document.addEventListener('keydown',k,true);}},250);}
+  function next(){disarm();i++;if(i<qs.length)show();else finish();}
   function finish(){
     const pct=Math.round(right/qs.length*100),sec=Math.round((Date.now()-t0)/1000);
     DB.sessions.push({d:new Date().toISOString(),m:title,r:right,n:qs.length});if(DB.sessions.length>200)DB.sessions.shift();save();
