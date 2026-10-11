@@ -459,7 +459,6 @@ function runQuiz(title,qs,opt){
       const corr=(q.type==='tap'||q.type==='seatap')?'':(ok&&res==='ok'?'':`<div class="ex">Richtig ist: <b>${esc(q.answer)}</b>${q.type==='text'?` – du hast geschrieben: „${esc(v)}"`:''}</div>`);
       fb.innerHTML=head+corr+(q.ex?`<div class="ex">${esc(q.ex)}</div>`:'');
       armNext();
-      if(ok&&res==='ok'&&!(q.alsoOk||[]).includes(v)&&!map){const me=i;setTimeout(()=>{if(i===me&&document.body.contains(bar))next();},900);}
     }
   }
   // Nach einer Antwort: Tippen irgendwo (außer Zoom-Knöpfe/Menü) oder Enter führt weiter
